@@ -1,107 +1,61 @@
-/*global WildRydes _config*/
+<div id="noApiMessage" class="configMessage" style="display: none;">
+        <div class="backdrop"></div>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Successfully Authenticated!</h3>
+            </div>
+            <div class="panel-body">
+                <p>This page is not functional yet because there is no API invoke URL configured in <a href="/js/config.js">/js/config.js</a>. You'll configure this in Module 3.</p>
+                <p>In the meantime, if you'd like to test the Amazon Cognito user pool authorizer for your API, use the auth token below:</p>
+                <textarea class="authToken"></textarea>
+            </div>
+        </div>
+    </div>
 
-var WildRydes = window.WildRydes || {};
-WildRydes.map = WildRydes.map || {};
+    <div id="noCognitoMessage" class="configMessage" style="display: none;">
+        <div class="backdrop"></div>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">No Cognito User Pool Configured</h3>
+            </div>
+            <div class="panel-body">
+                <p>There is no user pool configured in <a href="/js/config.js">/js/config.js</a>. You'll configure this in Module 2 of the workshop.</p>
+            </div>
+        </div>
+    </div>
 
-(function rideScopeWrapper($) {
-    var authToken;
-    WildRydes.authToken.then(function setAuthToken(token) {
-        if (token) {
-            authToken = token;
-        } else {
-            window.location.href = '/signin.html';
-        }
-    }).catch(function handleTokenError(error) {
-        alert(error);
-        window.location.href = '/signin.html';
-    });
-    function requestUnicorn(pickupLocation) {
-        $.ajax({
-            method: 'POST',
-            url: _config.api.invokeUrl + '/ride',
-            headers: {
-                Authorization: authToken
-            },
-            data: JSON.stringify({
-                PickupLocation: {
-                    Latitude: pickupLocation.latitude,
-                    Longitude: pickupLocation.longitude
-                }
-            }),
-            contentType: 'application/json',
-            success: completeRequest,
-            error: function ajaxError(jqXHR, textStatus, errorThrown) {
-                console.error('Error requesting ride: ', textStatus, ', Details: ', errorThrown);
-                console.error('Response: ', jqXHR.responseText);
-                alert('An error occured when requesting your unicorn:\n' + jqXHR.responseText);
-            }
-        });
-    }
+    <div id="main">
+        <div id="map">
+        </div>
+    </div>
 
-    function completeRequest(result) {
-        var unicorn;
-        var pronoun;
-        console.log('Response received from API: ', result);
-        unicorn = result.Unicorn;
-        pronoun = unicorn.Gender === 'Male' ? 'his' : 'her';
-        displayUpdate(unicorn.Name + ', your ' + unicorn.Color + ' unicorn, is on ' + pronoun + ' way.');
-        animateArrival(function animateCallback() {
-            displayUpdate(unicorn.Name + ' has arrived. Giddy up!');
-            WildRydes.map.unsetLocation();
-            $('#request').prop('disabled', 'disabled');
-            $('#request').text('Set Pickup');
-        });
-    }
+    <div id="authTokenModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="authToken">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel">Your Auth Token</h4>
+                </div>
+                <div class="modal-body">
+                    <textarea class="authToken"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    // Register click handler for #request button
-    $(function onDocReady() {
-        $('#request').click(handleRequestClick);
-        $(WildRydes.map).on('pickupChange', handlePickupChanged);
 
-        WildRydes.authToken.then(function updateAuthMessage(token) {
-            if (token) {
-                displayUpdate('You are authenticated. Click to see your <a href="#authTokenModal" data-toggle="modal">auth token</a>.');
-                $('.authToken').text(token);
-            }
-        });
+    <script src="js/vendor/jquery-3.1.0.js"></script>
+    <script src="js/vendor/bootstrap.min.js"></script>
+    <script src="js/vendor/aws-cognito-sdk.min.js"></script>
+    <script src="js/vendor/amazon-cognito-identity.min.js"></script>
+    <script src="https://js.arcgis.com/4.6/"></script>
+    <script src="js/config.js"></script>
+    <script src="js/cognito-auth.js"></script>
+    <script src="js/esri-map.js"></script>
+    <script src="js/ride.js"></script>
+</body>
 
-        if (!_config.api.invokeUrl) {
-            $('#noApiMessage').show();
-        }
-    });
-
-    function handlePickupChanged() {
-        var requestButton = $('#request');
-        requestButton.text('Request Unicorn');
-        requestButton.prop('disabled', false);
-    }
-
-    function handleRequestClick(event) {
-        var pickupLocation = WildRydes.map.selectedPoint;
-        event.preventDefault();
-        requestUnicorn(pickupLocation);
-    }
-
-    function animateArrival(callback) {
-        var dest = WildRydes.map.selectedPoint;
-        var origin = {};
-
-        if (dest.latitude > WildRydes.map.center.latitude) {
-            origin.latitude = WildRydes.map.extent.minLat;
-        } else {
-            origin.latitude = WildRydes.map.extent.maxLat;
-        }
-
-        if (dest.longitude > WildRydes.map.center.longitude) {
-            origin.longitude = WildRydes.map.extent.minLng;
-        } else {
-            origin.longitude = WildRydes.map.extent.maxLng;
-        }
-
-        WildRydes.map.animate(origin, dest, callback);
-    }
-
-    function displayUpdate(text) {
-        $('#updates').append($('<li>' + text + '</li>'));
-    }
-}(jQuery));
+</html>
